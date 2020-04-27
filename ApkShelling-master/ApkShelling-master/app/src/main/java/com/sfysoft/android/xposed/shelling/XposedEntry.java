@@ -80,6 +80,7 @@ public class XposedEntry implements IXposedHookLoadPackage {
                 log("Found " + application);
                 ClassLoaderHook hook;
                 try {
+                    //hook 原有的 classLoader
                     hook = new ClassLoaderHook(getSavingPath(packageName));
                     XposedHelpers.findAndHookMethod("java.lang.ClassLoader", lpparam.classLoader,
                                                     "loadClass", String.class, boolean.class, hook);
