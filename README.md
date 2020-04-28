@@ -6,3 +6,5 @@
 1. 在调试三方apk的时候要其 sdcard 存储权限因为 dex文件会存放在 sdcard中
 
 2. 项目重新运行后 需要重启手机 才会生效，这是因为 xposed框架的原因
+
+## app/doc 中已经有 打好的apk 可以直接[下载](https://github.com/NiLuogege/ApkShellingDemo/blob/master/ApkShelling-master/ApkShelling-master/app/doc/apkShell-release.apk)
