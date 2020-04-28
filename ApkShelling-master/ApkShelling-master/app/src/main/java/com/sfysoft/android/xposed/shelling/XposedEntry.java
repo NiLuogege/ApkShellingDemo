@@ -6,8 +6,14 @@
 package com.sfysoft.android.xposed.shelling;
 
 import android.annotation.SuppressLint;
+import android.text.TextUtils;
+import android.util.Log;
+
+import com.sfysoft.android.xposed.shelling.utils.SpUtil;
+
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
@@ -40,17 +46,19 @@ public class XposedEntry implements IXposedHookLoadPackage {
      */
     private static final String[] PACKED_APP_ENTRIES =
             {"com.stub.StubApp", "s.h.e.l.l.S", "com.secneo.apkwrapper.ApplicationWrapper",
-             "com.SecShell.SecShell.ApplicationWrapper", "com.tencent.StubShell.TxAppEntry",
-             "com.baidu.protect.StubApplication"};
+                    "com.SecShell.SecShell.ApplicationWrapper", "com.tencent.StubShell.TxAppEntry",
+                    "com.baidu.protect.StubApplication"};
 
     /**
      * 拟脱壳的App包名，对应AndroidManifests.xml里的<manifest package的值
      */
-    private static final String[] targetPackages =
-            new String[]{"com.sfysoft.shellingtest", "com.sfysoft.shellingtest2","com.aihuishou.airent","com.huodao.hdphone"};
+//    private static final String[] targetPackages =
+//            new String[]{"com.sfysoft.shellingtest", "com.sfysoft.shellingtest2","com.aihuishou.airent","com.huodao.hdphone"};
+    private String targetPackage = "";
 
     private static void log(String text) {
         XposedBridge.log(text);
+        Log.e("XposedEntry", text);
     }
 
     private static void log(Throwable throwable) {
@@ -60,15 +68,20 @@ public class XposedEntry implements IXposedHookLoadPackage {
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
         String packageName = lpparam.packageName;
-        log("Load package: " + packageName);
+
+
+        XSharedPreferences shared = new XSharedPreferences("Xposed.Okhttp.Cat", "config");
+        shared.reload();
+        targetPackage = shared.getString("APP_INFO", "");
+
+        log("Load package: " + packageName + " targetPackage= " + targetPackage);
 
         boolean found = false;
-        for (String targetPackage : targetPackages) {
-            if (packageName.equals(targetPackage)) {
-                found = true;
-                break;
-            }
+        if (!"".equals(targetPackage) && packageName.equals(targetPackage)) {
+            log("Load package:找到啦 " + packageName);
+            found = true;
         }
+
 
         if (!found) {
             return;
@@ -83,7 +96,7 @@ public class XposedEntry implements IXposedHookLoadPackage {
                     //hook 原有的 classLoader
                     hook = new ClassLoaderHook(getSavingPath(packageName));
                     XposedHelpers.findAndHookMethod("java.lang.ClassLoader", lpparam.classLoader,
-                                                    "loadClass", String.class, boolean.class, hook);
+                            "loadClass", String.class, boolean.class, hook);
                 } catch (NoSuchMethodException | ClassNotFoundException e) {
                     log(e);
                 }
@@ -95,8 +108,8 @@ public class XposedEntry implements IXposedHookLoadPackage {
     @SuppressWarnings("SameParameterValue")
     @SuppressLint("SdCardPath")
     private String getSavingPath(String packageName) {
-        log("/sdcard/fjg");
-        return "/sdcard/fjg";
+        log("dump 出来的 dex 会存放在 /sdcard/fjg/" + packageName +" 中");
+        return "/sdcard/fjg/" + packageName;
     }
 
     private static class ClassLoaderHook extends XC_MethodHook {
